@@ -31,7 +31,7 @@ Open */tomcat/components/sakai-content-review-pack-federated/WEB-INF/components.
 # Uwrite settings
 uwrite.key=<your-key>
 uwrite.secret=<your-secret>
-uwrite.checkType=1 # Internet
+uwrite.checkType=1
 ```  
 
 Possible check types (depends on your Uwrite account plan):  
@@ -55,7 +55,7 @@ contentreview.provider:Uwrite
 ## OPTIONAL PROPERTIES
 ```ini
 uwrite.poolSize=8
-uwrite.maxFileSize=20971520 # 20MB
+uwrite.maxFileSize=20971520
 uwrite.allowAnyFileType=false
 uwrite.exclude.citations=true
 uwrite.exclude.references=true
