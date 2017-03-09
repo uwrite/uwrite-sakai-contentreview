@@ -60,7 +60,9 @@ public class ContentReviewServiceUwriteImpl implements ContentReviewService {
                 "application/octet-stream"
         )));
         acceptFilesMap.put(".html", new TreeSet<>(Arrays.asList(
-                "text/html"
+                "text/html",
+                "application/xhtml+xml",
+                "text/plain"
         )));
         acceptFilesMap.put(".pages", new TreeSet<>(Arrays.asList(
                 "application/x-iwork-pages-sffpages"
@@ -142,8 +144,11 @@ public class ContentReviewServiceUwriteImpl implements ContentReviewService {
                 //upload
                 UFile uFile;
                 try (InputStream is = resource.streamContent()) {
-                    String fileName = resource.getProperties().getProperty(ResourceProperties.PROP_DISPLAY_NAME);
-                    uFile = client.uploadFile(is, FilenameUtils.getExtension(id), FilenameUtils.getBaseName(fileName));
+                    uFile = client.uploadFile(
+                            is,
+                            getResourceExtension(resource),
+                            FilenameUtils.getBaseName(getResourceFileName(resource))
+                    );
 
                     // check
                     UCheck uCheck = client
@@ -331,7 +336,7 @@ public class ContentReviewServiceUwriteImpl implements ContentReviewService {
     }
 
     private String injectLanguageInReportLink(String userId, String linkStr) {
-        if(linkStr == null) {
+        if (linkStr == null) {
             return null;
         }
 
@@ -359,20 +364,29 @@ public class ContentReviewServiceUwriteImpl implements ContentReviewService {
             return null;
         }
 
-        if(item.getError() != null) {
+        if (item.getError() != null) {
             throw new ReportException(item.getError());
         }
 
         return injectLanguageInReportLink(userId, editable ? item.getEditLink() : item.getLink());
     }
 
-    private boolean checkContentResource(ContentResource resource) {
+    private String getResourceFileName(final ContentResource resource) {
+        return FilenameUtils.getName(resource.getId());
+    }
+
+    private String getResourceExtension(final ContentResource resource) {
+        final String ext = FilenameUtils.getExtension(resource.getId());
+        return ext.isEmpty() ? null : ext;
+    }
+
+    private boolean checkContentResource(final ContentResource resource) {
         if (resource == null) {
+            log.warn("checkContentResource for null resource");
             return false;
         }
 
         try {
-
             if (resource.getContentLength() == 0) {
                 return false;
             }
@@ -381,12 +395,8 @@ public class ContentReviewServiceUwriteImpl implements ContentReviewService {
                 return false;
             }
 
-            String ext = "." + FilenameUtils.getExtension(resource.getProperties().getProperty(ResourceProperties.PROP_DISPLAY_NAME));
+            final String ext = "." + getResourceExtension(resource);
             if (!acceptFilesMap.containsKey(ext)) {
-                return false;
-            }
-
-            if (!acceptFilesMap.get(ext).contains(resource.getContentType())) {
                 return false;
             }
         } catch (Exception e) {
